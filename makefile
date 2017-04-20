@@ -30,7 +30,7 @@ host: $(OBJS)
 	$(SZ) $(OUTPUT)
 
 bbb: $(OBJS)
-	$(CC) $(CFLAGS) $(BBBSRCS) $(INCLUDES) -o $(OUTPUT)bbb $(LDFLAGS) $(DEFINES)
+	$(CC) $(CFLAGS) $(SRCS) $(INCLUDES) -o $(OUTPUT)bbb $(LDFLAGS) $(DEFINES)
 	$(SZ) $(OUTPUT)bbb
 
 
