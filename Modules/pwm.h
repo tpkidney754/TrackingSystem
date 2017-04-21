@@ -10,5 +10,5 @@
 
 // Function prototypes
 void PWM_Init();
-void PWM_ChangeDutyCycle(uint32_t dutyCycle);
+void PWM_ChangeDutyCycle(uint32_t dutyCycle, uint32_t pin);
 #endif // __PWM__
