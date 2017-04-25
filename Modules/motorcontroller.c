@@ -1,6 +1,6 @@
 #include "motorcontroller.h"
 
-const static uint8_t pinsFileLocation[NUM_GPIO_PINS][30] =
+static uint8_t pinsFileLocation[NUM_GPIO_PINS][30] =
 {
     GPIO_PIN_66_LOC,
     GPIO_PIN_67_LOC,
@@ -89,6 +89,24 @@ void MC_CircleCounterClockwise(void)
 
 void MC_Stop(void)
 {
+    FILE* file;
+    file = fopen(strcat(pinsFileLocation[EN1], "/value"), "w");
+    fprintf(file, "0");
+    fclose(file);
+
+    file = fopen(strcat(pinsFileLocation[EN2], "/value"), "w");
+    fprintf(file, "0");
+    fclose(file);
+
+    file = fopen(strcat(pinsFileLocation[EN3], "/value"), "w");
+    fprintf(file, "0");
+    fclose(file);
+
+    file = fopen(strcat(pinsFileLocation[EN4], "/value"), "w");
+    fprintf(file, "0");
+    fclose(file);
+
+    /*
     uint8_t buffer[100];
     sprintf(buffer, "echo 0 > %s/%s", pinsFileLocation[EN1], "value");
     system(buffer);
@@ -98,4 +116,5 @@ void MC_Stop(void)
     system(buffer);
     sprintf(buffer, "echo 0 > %s/%s", pinsFileLocation[EN4], "value");
     system(buffer);
+    */
 }
