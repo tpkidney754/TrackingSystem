@@ -268,27 +268,43 @@ ImageCapture
 void *ImageCapture( void *threadid ){
 
 	struct timespec	current;
-		   string  	log = "[ ImgCap  ] ";
+		   string  	log = "[ ImgCap ] ";
+
+    Mat capture, gray;
+    vector<Vec3f> circles;
+    VideoCapture cam;
+
+    cam.open(0);
 
 	while(1){
 		// Semaphore used to sync timing from SoftTimer
 		sem_wait( &capture_sem );
 
-		// Mutex used to access shared memory
-		// ImageCapture - Update circle location information
-		pthread_mutex_lock( &system_mutex );
+        if (!cam.read(capture)) {
+            cout << "Could not capture image." << endl;
+            break;
+        }
 
-		// Using the timestamp information as placeholder
-		clock_gettime( CLOCK_REALTIME, &current );
-		cout << log << "Image Capture running : " <<
-			current.tv_sec << "." <<
-			setfill('0') << setw(9) << current.tv_nsec << endl;
+        // Convert to gray image
+        cvtColor(capture, gray, COLOR_BGR2GRAY);
 
-		// Release lock
-		pthread_mutex_unlock( &system_mutex );
+        // Find circles with Hough transform
+        HoughCircles(gray, circles, CV_HOUGH_GRADIENT, 1, gray.rows/8, 100, 50, 0, 0);
 
-		// Delay as placeholder
-		for(unsigned int ii=0; ii<1000000; ii++);		
+        if (circles.size() < 1) {
+            cout << "No circle in image." << endl;
+
+            // Send to message queue
+            // Send center point
+
+        } else {
+
+            // Find circle center for one circle
+            Point center(cvRound(circles[0][0]), cvRound(circles[0][1]));
+            
+		    // Send to message queue
+            // cvRound(circles[0][0])
+        }
 	}
 }
 
