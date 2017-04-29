@@ -42,9 +42,20 @@ void PWM_Init()
     fclose(file);
 }
 
-void PWM_ChangeDutyCycle(uint32_t dutyCycle)
+void PWM_ChangeDutyCycle(uint32_t dutyCycle, uint32_t pin)
 {
-    FILE *file = fopen("/sys/class/pwm/pwm3/duty_ns", "w");
-    fprintf(file, "%d", (PWM_PERIOD_NS * dutyCycle));
-    fclose(file);
+    FILE *file;
+    switch (pin)
+    {
+       case 0:
+            file = fopen("/sys/class/pwm/pwm3/duty_ns", "w");
+            fprintf(file, "%d", (PWM_PERIOD_NS * dutyCycle));
+            fclose(file);
+            break;
+        case 1:
+            file = fopen("/sys/class/pwm/pwm4/duty_ns", "w");
+            fprintf(file, "%d", (PWM_PERIOD_NS * dutyCycle));
+            fclose(file);
+            break;
+    }
 }
