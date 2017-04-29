@@ -274,6 +274,10 @@ void *ImageCapture( void *threadid ){
     vector<Vec3f> circles;
     VideoCapture cam;
 
+    cam.set(CV_CAP_PROF_FRAME_WIDTH, 640);
+    cam.set(CV_CAP_PROF_FRAME_HEIGHT, 480);
+
+
     cam.open(0);
 
     cout << "Opened camera on video 0" << endl;
