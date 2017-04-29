@@ -276,6 +276,8 @@ void *ImageCapture( void *threadid ){
 
     cam.open(0);
 
+    cout << "Opened camera on video 0" << endl;
+
 	while(1){
 		// Semaphore used to sync timing from SoftTimer
 		sem_wait( &capture_sem );
@@ -298,10 +300,16 @@ void *ImageCapture( void *threadid ){
             // Send center point
 
         } else {
+            cout << "Found a circle!" << endl;
 
             // Find circle center for one circle
             Point center(cvRound(circles[0][0]), cvRound(circles[0][1]));
-            
+
+            cout << "Circle x and y: ";
+            cout << cvRound(circles[0][0]);
+            cout << " ";
+            cout << cvRound(circles[0][1]);        
+
 		    // Send to message queue
             // cvRound(circles[0][0])
         }
