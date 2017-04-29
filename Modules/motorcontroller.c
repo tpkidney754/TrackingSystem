@@ -1,6 +1,6 @@
 #include "motorcontroller.h"
 
-const static uint8_t pinsFileLocation[NUM_GPIO_PINS][30] =
+static const uint8_t pinsFileLocation[NUM_GPIO_PINS][30] =
 {
     GPIO_PIN_66_LOC,
     GPIO_PIN_67_LOC,
@@ -8,69 +8,97 @@ const static uint8_t pinsFileLocation[NUM_GPIO_PINS][30] =
     GPIO_PIN_68_LOC
 };
 
+static const uint8_t pinsFileDirection[NUM_GPIO_PINS][35] =
+{
+    LEFT_MOTOR_IN1_DIRECTION,
+    LEFT_MOTOR_IN2_DIRECTION,
+    RIGHT_MOTOR_IN3_DIRECTION,
+    RIGHT_MOTOR_IN4_DIRECTION
+};
+
+static const uint8_t pinsFileValue[NUM_GPIO_PINS][35] =
+{
+    LEFT_MOTOR_IN1_VALUE,
+    LEFT_MOTOR_IN2_VALUE,
+    RIGHT_MOTOR_IN3_VALUE,
+    RIGHT_MOTOR_IN4_VALUE
+};
+
 const static uint32_t pins[NUM_GPIO_PINS] = {66, 67, 69, 68};
 
 void MC_Init(void)
 {
-    uint8_t buffer[100];
+    FILE* file;
 
     for (uint32_t i = 0; i < NUM_GPIO_PINS; i++)
     {
-        sprintf(buffer, "echo %d > %s", pins[i], GPIO_EXPORT_PATH);
-        system(buffer);
+        file = fopen(GPIO_EXPORT_PATH, "w");
+        fprintf(file, "%d", pins[i]);
+        fclose(file);
     }
 
     for (uint32_t i = 0; i < NUM_GPIO_PINS; i++)
     {
-        sprintf(buffer, "echo out > %s/%s", pinsFileLocation[i], "direction");
-        system(buffer);
-        sprintf(buffer, "echo 1 > %s/%s", pinsFileLocation[i], "value");
-        system(buffer);
+        file = fopen(pinsFileDirection[i], "w");
+        fprintf(file, "out");
+        fclose(file);
     }
+
+    MC_Stop();
 }
 
 void MC_Forward(MC_Motor_t motor)
 {
-    uint8_t buffer[100];
+    FILE* file;
     switch (motor)
     {
-        //This will need testing to make sure becuae the datasheet is vague about the direction
         case LeftMotor:
-            //LEFT_MOTOR_IN1 high
-            //LEFT_MOTOR_IN2 low
-            sprintf(buffer, "echo 1 > %s/%s", pinsFileLocation[EN1], "value");
-            system(buffer);
-            sprintf(buffer, "echo 0 > %s/%s", pinsFileLocation[EN2], "value");
-            system(buffer);
+            file = fopen(pinsFileValue[EN1], "w");
+            fprintf(file, "1");
+            fclose(file);
+
+            file = fopen(pinsFileValue[EN2], "w");
+            fprintf(file, "0");
+            fclose(file);
+
             break;
         case RightMotor:
-            //RIGHT_MOTOR_IN3 high
-            //RIGHT_MOTOR_IN4 low
-            sprintf(buffer, "echo 1 > %s/%s", pinsFileLocation[EN3], "value");
-            system(buffer);
-            sprintf(buffer, "echo 0 > %s/%s", pinsFileLocation[EN4], "value");
-            system(buffer);
+            file = fopen(pinsFileValue[EN3], "w");
+            fprintf(file, "1");
+            fclose(file);
+
+            file = fopen(pinsFileValue[EN4], "w");
+            fprintf(file, "0");
+            fclose(file);
+
             break;
     }
 }
 
 void MC_Reverse(MC_Motor_t motor)
 {
-    uint8_t buffer[100];
+    FILE* file;
     switch (motor)
     {
-        //This will need testing to make sure becuae the datasheet is vague about the direction
         case LeftMotor:
-            sprintf(buffer, "echo 0 > %s/%s", pinsFileLocation[EN1], "value");
-            system(buffer);
-            sprintf(buffer, "echo 1 > %s/%s", pinsFileLocation[EN2], "value");
-            system(buffer);
+            file = fopen(pinsFileValue[EN1], "w");
+            fprintf(file, "0");
+            fclose(file);
+
+            file = fopen(pinsFileValue[EN2], "w");
+            fprintf(file, "1");
+            fclose(file);
+
             break;
         case RightMotor:
-            sprintf(buffer, "echo 0 > %s/%s", pinsFileLocation[EN3], "value");
-            system(buffer);
-            sprintf(buffer, "echo 1 > %s/%s", pinsFileLocation[EN4], "value");
-            system(buffer);
+            file = fopen(pinsFileValue[EN3], "w");
+            fprintf(file, "0");
+            fclose(file);
+
+            file = fopen(pinsFileValue[EN4], "w");
+            fprintf(file, "1");
+            fclose(file);
+
             break;
     }
 }
@@ -89,13 +117,11 @@ void MC_CircleCounterClockwise(void)
 
 void MC_Stop(void)
 {
-    uint8_t buffer[100];
-    sprintf(buffer, "echo 0 > %s/%s", pinsFileLocation[EN1], "value");
-    system(buffer);
-    sprintf(buffer, "echo 0 > %s/%s", pinsFileLocation[EN2], "value");
-    system(buffer);
-    sprintf(buffer, "echo 0 > %s/%s", pinsFileLocation[EN3], "value");
-    system(buffer);
-    sprintf(buffer, "echo 0 > %s/%s", pinsFileLocation[EN4], "value");
-    system(buffer);
+    FILE* file;
+    for (uint32_t i = 0; i < NUM_GPIO_PINS; i++)
+    {
+        file = fopen(pinsFileValue[i], "w");
+        fprintf(file, "0");
+        fclose(file);
+    }
 }

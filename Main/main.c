@@ -71,6 +71,8 @@ void Initialization()
 {
     PWM_Init();
     MC_Init();
+
+    //PRO_RunProfilingSuite();
 }
 
 void PrintIntructions()
