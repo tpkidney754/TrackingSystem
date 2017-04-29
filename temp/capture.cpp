@@ -274,9 +274,8 @@ void *ImageCapture( void *threadid ){
     vector<Vec3f> circles;
     VideoCapture cam;
 
-    cam.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-    cam.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
-
+    cam.set(CV_CAP_PROP_FRAME_WIDTH, 320);
+    cam.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
 
     cam.open(0);
 
@@ -312,12 +311,20 @@ void *ImageCapture( void *threadid ){
             cout << "Circle x and y: ";
             cout << cvRound(circles[0][0]);
             cout << " ";
-            cout << cvRound(circles[0][1]);        
+            cout << cvRound(circles[0][1]) << endl;
 
 		    // Send to message queue
             // cvRound(circles[0][0])
         }
-	}
+
+        // 'q' will halt this thread and timer
+        char c = cvWaitKey(30);
+        if( c == 'q' ){
+            printf("break sig\n");
+            break;
+        }
+
+    }
 }
 
 /*******************************************************************
