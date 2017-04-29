@@ -60,7 +60,9 @@ int main()
                 break;
             default:
                 printf("%c is an invalid command.\n", input);
+                while ((input = getchar()) != '\n' && input != EOF);
                 PrintIntructions();
+
         }
     }
 }
