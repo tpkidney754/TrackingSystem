@@ -6,3 +6,4 @@ SRCS = \
 		./Main/main.c \
 		./Modules/pwm.c \
 		./Modules/motorcontroller.c \
+		./Modules/profiling.c

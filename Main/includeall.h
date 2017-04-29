@@ -5,9 +5,12 @@
 #endif /* __STDC_VERSION__ */
 
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <stdint.h>
+#include <time.h>
 #include <string.h>
 
 #include "motorcontroller.h"
 #include "pwm.h"
+#include "profiling.h"

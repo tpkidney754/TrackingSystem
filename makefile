@@ -6,9 +6,9 @@ host: SZ = size
 bbb:  SZ = arm-linux-gnueabihf-size
 frdm: SZ = arm-none-eabi-size
 include sources.mk
-CFLAGS = -Werror -g -O0 -std=c99 -Arch=x86
-host: CFLAGS = -Werror -g -O0 -std=c99 -Arch=x86
-bbb:  CFLAGS = -Werror -g -O0 -std=c99 -Arch=ARM
+CFLAGS = -Werror -g -O0 -std=c99 -Arch=x86 -lpthread -lrt
+host: CFLAGS = -Werror -g -O0 -std=c99 -Arch=x86 -lpthread -lrt
+bbb:  CFLAGS = -Werror -g -O0 -std=c99 -Arch=ARM -lpthread -lrt
 frdm:  CFLAGS = -Werror -g3 -O0 -std=c99 -Arch=ARM --specs=nosys.specs \
 		 -mcpu=cortex-m0plus -mthumb -fmessage-length=0 -fsigned-char \
 		 -ffunction-sections -fdata-sections  -MMD -MP
