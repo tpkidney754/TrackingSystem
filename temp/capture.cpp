@@ -44,9 +44,12 @@ FIXME - Info from Ex4
 #include <iomanip>
 
 //OpenCV required packages
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+//#include <opencv2/core/core.hpp>
+//#include <opencv2/highgui/highgui.hpp>
+//#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 
 // Defined values
 #define TIMER_S      0
@@ -59,6 +62,7 @@ FIXME - Info from Ex4
 
 //Used packages
 using namespace cv;
+//using namespace cv2;
 using namespace std;
 
 // Pthread definitions
@@ -114,7 +118,7 @@ unsigned int continue_running;
 // Mutex protected variable
 unsigned int error_offset;
 ////////////////////////////////////////////
-
+VideoCapture cam;
 /*******************************************************************
 main
 
@@ -135,6 +139,16 @@ int main( int argc, char* argv[] )
     capture_status   = 1;
     motor_status     = 1;
     error_offset     = 34;
+//    VideoCapture cam;
+
+    cam.set(CV_CAP_PROP_FRAME_WIDTH, 320);
+    cam.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
+    cam.set(CV_CAP_PROP_FPS, 2);
+    cam.set(CV_CAP_PROP_BUFFERSIZE, 2);
+
+    cam.open(0);
+
+    cout << log << "Opened camera on video 0" << endl;
 
     //CPU select for setting affinity later
     //for multi-core system, this could be modified
@@ -351,16 +365,18 @@ void *ImageCapture( void *threadid ){
     struct timespec    current;
            string      log = "[ ImgCap  ] ";
 
-    Mat capture, gray;
+    Mat capture, gray, resized;
     vector<Vec3f> circles;
-    VideoCapture cam;
 
-    cam.set(CV_CAP_PROP_FRAME_WIDTH, 320);
-    cam.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
+    Size size(320,240);
+//    VideoCapture cam;
 
-    cam.open(0);
+//    cam.set(CV_CAP_PROP_FRAME_WIDTH, 320);
+//    cam.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
 
-    cout << "Opened camera on video 0" << endl;
+//    cam.open(0);
+
+//    cout << "Opened camera on video 0" << endl;
 
     while(continue_running){
         // Semaphore used to sync timing from SoftTimer
@@ -385,13 +401,16 @@ void *ImageCapture( void *threadid ){
 
         capture_status = 2 - continue_running;*/
 
-        if (!cam.read(capture)) {
-            cout << "Could not capture image." << endl;
-            break;
-        }
+//        if (!cam.read(capture)) {
+//            cout << "Could not capture image." << endl;
+//            break;
+//        }
+
+	cam >> capture;
+	resize(capture, resized, size);
 
         // Convert to gray image
-        cvtColor(capture, gray, COLOR_BGR2GRAY);
+        cvtColor(resized, gray, COLOR_BGR2GRAY);
 
         // Find circles with Hough transform
         HoughCircles(gray, circles, CV_HOUGH_GRADIENT, 1, gray.rows/8, 100, 50, 0, 0);
@@ -417,6 +436,9 @@ void *ImageCapture( void *threadid ){
             // cvRound(circles[0][0])
         }
 
+
+	cout << log << "Update status" << endl;
+	capture_status = 2 - continue_running;
         // 'q' will halt this thread and timer
 /*        char c = cvWaitKey(30);
         if( c == 'q' ){
