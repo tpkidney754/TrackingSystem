@@ -51,6 +51,8 @@ FIXME - Info from Ex4
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include "includeall.h"
+
 // Defined values
 #define TIMER_S      0
 #define TIMER_NS     100000000
@@ -135,6 +137,9 @@ int main( int argc, char* argv[] )
     int result,ii;
     string input,cut;
     int rt_max_prio, rt_min_prio;
+
+    PWM_Init();
+    MC_Init();
 
     //Global Var setup
     continue_running = 1;
@@ -460,6 +465,7 @@ void *MotorControl( void *threadid ){
     struct timespec current;
            string   log = "[ MtrCtrl ] ";
 
+    uint32_t xdirection = 0;
     while(continue_running){
         // Semaphore used to sync timing from SoftTimer
         sem_wait( &motor_sem );
@@ -468,7 +474,14 @@ void *MotorControl( void *threadid ){
         // Mutex used to access shared memory
         // MotorControl - Get circle location information
         pthread_mutex_lock( &system_mutex );
+        xdirection = error_offset;
+        error_offset = 0;
+        pthread_mutex_unlock( &system_mutex );
 
+        if(xdirection > 0)
+        {
+            MC_CircleClockwise();
+        }
     /* Inject error to test status information and exit
         //Single miss, should stall and recover
         if(error_offset == 188){
@@ -486,16 +499,15 @@ void *MotorControl( void *threadid ){
         }
     */
         // Using the timestamp information as placeholder
-        clock_gettime( CLOCK_REALTIME, &current );
-        cout << log << "Motor Control running : " <<
+       // clock_gettime( CLOCK_REALTIME, &current );
+       /* cout << log << "Motor Control running : " <<
             current.tv_sec << "." <<
-            setfill('0') << setw(9) << current.tv_nsec << endl;
+            setfill('0') << setw(9) << current.tv_nsec << endl;*/
         //cout << log << "Error offset = " << error_offset << endl;
         // Release lock
-        pthread_mutex_unlock( &system_mutex );
 
         // Delay as placeholder
-        for(unsigned int ii=0; ii<1000000; ii++);
+        //for(unsigned int ii=0; ii<1000000; ii++);
 
         motor_status = 2 - continue_running;
 

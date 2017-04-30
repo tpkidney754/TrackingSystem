@@ -1,13 +1,13 @@
 CC = gcc
-host: CC = gcc
-bbb:  CC = arm-linux-gnueabihf-gcc
+host: CC = g++
+bbb:  CC = arm-linux-gnueabihf-g++
 frdm: CC = arm-none-eabi-gcc
 host: SZ = size
 bbb:  SZ = arm-linux-gnueabihf-size
 frdm: SZ = arm-none-eabi-size
 include sources.mk
-CFLAGS = -Werror -g -O0 -std=c99 -Arch=x86 -lpthread -lrt
-host: CFLAGS = -Werror -g -O0 -std=c99 -Arch=x86 -lpthread -lrt
+CFLAGS = -Werror -g -O0 -std=c99 -Arch=x86
+host: CFLAGS = -Werror -g -O0 -Arch=x86 -lpthread -lrt
 bbb:  CFLAGS = -Werror -g -O0 -std=c99 -Arch=ARM -lpthread -lrt
 frdm:  CFLAGS = -Werror -g3 -O0 -std=c99 -Arch=ARM --specs=nosys.specs \
 		 -mcpu=cortex-m0plus -mthumb -fmessage-length=0 -fsigned-char \
@@ -20,17 +20,18 @@ LIBOBJS = $(LIBS:.c=.o)
 PREOBJS = $(SRCS:.c=.i)
 ASMOBJS = $(SRCS:.c=.S)
 OUTPUT = Tracking
+CPPLIBS= -L/usr/lib -lopencv_core -lopencv_flann -lopencv_video
 
 
 
 .PHONY: size host bbb frdm preprocess asm-file compile-all build clean build-lib %.o %.i %.S
 
 host: $(OBJS)
-	$(CC) $(CFLAGS) $(SRCS) $(INCLUDES) -o $(OUTPUT) $(LDFLAGS) $(DEFINES)
+	$(CC) $(CFLAGS) $(SRCS) $(INCLUDES) -o $(OUTPUT) $(LDFLAGS) $(DEFINES) -lpthread -lrt `pkg-config --libs opencv` $(CPPLIBS) $(LIBS)
 	$(SZ) $(OUTPUT)
 
 bbb: $(OBJS)
-	$(CC) $(CFLAGS) $(SRCS) $(INCLUDES) -o $(OUTPUT)bbb $(LDFLAGS) $(DEFINES)
+	$(CC) $(CFLAGS) $(SRCS) $(INCLUDES) -o $(OUTPUT)bbb $(LDFLAGS) $(DEFINES) `pkg-config --libs opencv` $(CPPLIBS) $(LIBS)
 	$(SZ) $(OUTPUT)bbb
 
 

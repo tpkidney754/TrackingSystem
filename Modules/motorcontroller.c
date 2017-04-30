@@ -1,6 +1,6 @@
 #include "motorcontroller.h"
 
-static const uint8_t pinsFileLocation[NUM_GPIO_PINS][30] =
+static const char pinsFileLocation[NUM_GPIO_PINS][30] =
 {
     GPIO_PIN_66_LOC,
     GPIO_PIN_67_LOC,
@@ -8,7 +8,7 @@ static const uint8_t pinsFileLocation[NUM_GPIO_PINS][30] =
     GPIO_PIN_68_LOC
 };
 
-static const uint8_t pinsFileDirection[NUM_GPIO_PINS][35] =
+static const char pinsFileDirection[NUM_GPIO_PINS][35] =
 {
     LEFT_MOTOR_IN1_DIRECTION,
     LEFT_MOTOR_IN2_DIRECTION,
@@ -16,7 +16,7 @@ static const uint8_t pinsFileDirection[NUM_GPIO_PINS][35] =
     RIGHT_MOTOR_IN4_DIRECTION
 };
 
-static const uint8_t pinsFileValue[NUM_GPIO_PINS][35] =
+static const char pinsFileValue[NUM_GPIO_PINS][35] =
 {
     LEFT_MOTOR_IN1_VALUE,
     LEFT_MOTOR_IN2_VALUE,

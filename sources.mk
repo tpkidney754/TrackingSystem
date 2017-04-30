@@ -3,7 +3,7 @@ INCLUDES = \
 		-I ./Modules \
 
 SRCS = \
-		./Main/main.c \
+		./Main/main.cpp \
 		./Modules/pwm.c \
 		./Modules/motorcontroller.c \
 		./Modules/profiling.c
