@@ -257,6 +257,8 @@ void *SoftTimer( void *threadid ){
     unsigned int      m_s_cnt   = 0;
     unsigned int      c_m_cnt   = 0;
     unsigned int      m_m_cnt   = 0;
+    unsigned int      c_stall   = 0;
+    unsigned int      m_stall   = 0;
              string   log       = "[ TIMER   ] ";
 
     req.tv_sec  = TIMER_S;  // 0 secs
@@ -276,21 +278,36 @@ void *SoftTimer( void *threadid ){
         }
 */
         if( cycle_cnt%SYNC_FREQ == 0){
-            if(capture_status != 1){
+            if(capture_status == 0){
+                if(c_stall == 1){
+                    cout << log << "Exiting due to consecutive missed deadlines" << endl; 
+                    continue_running = 0;
+                    continue;
+                }
                 cout << log << "Capture missed deadline" << endl;
                 c_m_cnt++;
+                c_stall = 1;
+            }else{
+                c_stall = 0;
             }
-            if(motor_status != 1){
+            if(motor_status == 0){
+                if(m_stall == 1){
+                    cout << log << "Exiting due to consecutive missed deadlines" << endl; 
+                    continue_running = 0;
+                    continue;
+                }
                 cout << log << "Motor missed deadline" << endl;
                 m_m_cnt++;
+                m_stall = 1;
+            }else{
+                m_stall = 0;
             }
-            capture_status = 0;
-            motor_status   = 0;
-
-            sem_post( &capture_sem );
-            sem_post( &motor_sem );
-            c_s_cnt++;
-            m_s_cnt++;
+            if(m_stall + c_stall == 0){
+                sem_post( &capture_sem );
+                sem_post( &motor_sem );
+                c_s_cnt++;
+                m_s_cnt++;
+            }
         }
         if( cycle_cnt == 9999 ){
             cycle_cnt = 0;
@@ -304,13 +321,19 @@ void *SoftTimer( void *threadid ){
 
     // Evaluate last cycle
     nanosleep( &req, NULL );
-    if(capture_status != 1){
+    if(capture_status == 0){
         cout << log << "Capture missed deadline" << endl;
         c_m_cnt++;
     }
-    if(motor_status != 1){
+    if(capture_status == 1){
+        sem_post( &capture_sem ); //Graceful exit if due to stall
+    }
+    if(motor_status == 0){
         cout << log << "Motor missed deadline" << endl;
         m_m_cnt++;
+    }
+    if(motor_status == 1){
+        sem_post( &motor_sem ); //Graceful exit if due to stall
     }
 
     cout << log << "Capture : " << c_s_cnt << " starts, " << c_m_cnt << " missed." <<endl;
@@ -331,6 +354,7 @@ void *ImageCapture( void *threadid ){
     while(continue_running){
         // Semaphore used to sync timing from SoftTimer
         sem_wait( &capture_sem );
+        capture_status = 0;
 
         // Mutex used to access shared memory
         // ImageCapture - Update circle location information
@@ -348,7 +372,7 @@ void *ImageCapture( void *threadid ){
         // Delay as placeholder
         for(unsigned int ii=0; ii<1000000; ii++);   
 
-        capture_status = 1;     
+        capture_status = 2 - continue_running;     
     }
 }
 
@@ -364,11 +388,28 @@ void *MotorControl( void *threadid ){
     while(continue_running){
         // Semaphore used to sync timing from SoftTimer
         sem_wait( &motor_sem );
+        motor_status   = 0;
 
         // Mutex used to access shared memory
         // MotorControl - Get circle location information
         pthread_mutex_lock( &system_mutex );
 
+    /* Inject error to test status information and exit
+        //Single miss, should stall and recover
+        if(error_offset == 188){
+            // Delay as placeholder
+            for(unsigned int kk=0; kk<6; kk++){
+                for(unsigned int ii=0; ii<100000000; ii++);
+            }
+        }
+        //Multiple misses, should exit (reset)
+        if(error_offset == 258){
+            // Delay as placeholder
+            for(unsigned int kk=0; kk<12; kk++){
+                for(unsigned int ii=0; ii<100000000; ii++);
+            }
+        }
+    */
         // Using the timestamp information as placeholder
         clock_gettime( CLOCK_REALTIME, &current );
         cout << log << "Motor Control running : " << 
@@ -381,7 +422,7 @@ void *MotorControl( void *threadid ){
         // Delay as placeholder
         for(unsigned int ii=0; ii<1000000; ii++);
 
-        motor_status = 1;     
+        motor_status = 2 - continue_running;     
 
     }
 }
