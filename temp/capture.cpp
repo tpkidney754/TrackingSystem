@@ -2,29 +2,29 @@
 FIXME - Info from Ex4
 
     OpenCV capture, transform, display project
-    
+
     Much of the code based on previous projects provided from ECEN 5623
-  
+
     Author: B. Heberlein
             M. Lennartz
-  
+
     University of Colorado at Boulder: ECEN 5623 - Spring 2017
-    
+
     This project is intended to have multiple modes that have seperate
     functions.  There is an analysis mode that will aquire the hardcoded
     camera, and take a series of image captures, perform a tranform, and
     display those images in a created window.  The number of captures and
-    displays is a hardcoded value that will be used for calculating the 
+    displays is a hardcoded value that will be used for calculating the
     average frame-rate.
-    
+
     The other mode is the actual running mode that will perform a similar
     function as analysis but will have a soft-timer with hardcoded delay
-    times.  The timer will start the capture thread, and check if it 
+    times.  The timer will start the capture thread, and check if it
     meets the associated deadline.  This process will run until the 'q'
-    button is pressed exiting the capture process and stopping the 
-    soft-timer.  A failure rate will then be calculated based on the 
+    button is pressed exiting the capture process and stopping the
+    soft-timer.  A failure rate will then be calculated based on the
     total number of captures and misses.
-    
+
     The project also has other modes such as debug and a default display
     mode.
 ******************************************************************************/
@@ -177,8 +177,8 @@ int main( int argc, char* argv[] )
 
 
     if( sched_setscheduler( getpid(), SCHED_FIFO, &main_param ) ){
-        cout << log << "ERROR; sched_setscheduler rc is " << rc << endl; 
-        perror(NULL); 
+        cout << log << "ERROR; sched_setscheduler rc is " << rc << endl;
+        perror(NULL);
         exit(-1);
     }
 
@@ -192,34 +192,34 @@ int main( int argc, char* argv[] )
     pthread_attr_setschedparam(&main_sched_attr, &main_param);
 
     //Create timer thread
-    if( pthread_create( &timer_thread, 
-                        &timer_sched_attr, 
-                        SoftTimer, 
-                        (void*)0                ) 
+    if( pthread_create( &timer_thread,
+                        &timer_sched_attr,
+                        SoftTimer,
+                        (void*)0                )
     ){
         cout << log << "ERROR!! Could not create timer thread!" << endl;
         perror(NULL);
         return -1;
     }
-    if( pthread_create( &capture_thread, 
-                        &capture_sched_attr, 
-                        ImageCapture, 
-                        (void*)0                ) 
+    if( pthread_create( &capture_thread,
+                        &capture_sched_attr,
+                        ImageCapture,
+                        (void*)0                )
     ){
         cout << log << "ERROR!! Could not create ImageCapture thread!" << endl;
         perror(NULL);
         return -1;
     }
-    if( pthread_create( &motor_thread, 
-                        &motor_sched_attr, 
-                        MotorControl, 
-                        (void*)0                ) 
+    if( pthread_create( &motor_thread,
+                        &motor_sched_attr,
+                        MotorControl,
+                        (void*)0                )
     ){
         cout << log << "ERROR!! Could not create MotorControl thread!" << endl;
         perror(NULL);
         return -1;
     }
-    
+
     //Waits until threads are completed
     pthread_join( timer_thread,   NULL );
     pthread_join( capture_thread, NULL );
@@ -263,7 +263,7 @@ void *SoftTimer( void *threadid ){
 
     req.tv_sec  = TIMER_S;  // 0 secs
     req.tv_nsec = TIMER_NS; // 100 msecs (1e8 nanosecs)
-    
+
     cout << log << "Setup hold time" << endl;
     nanosleep( &req, NULL );
 
@@ -280,7 +280,7 @@ void *SoftTimer( void *threadid ){
         if( cycle_cnt%SYNC_FREQ == 0){
             if(capture_status == 0){
                 if(c_stall == 1){
-                    cout << log << "Exiting due to consecutive missed deadlines" << endl; 
+                    cout << log << "Exiting due to consecutive missed deadlines" << endl;
                     continue_running = 0;
                     continue;
                 }
@@ -292,7 +292,7 @@ void *SoftTimer( void *threadid ){
             }
             if(motor_status == 0){
                 if(m_stall == 1){
-                    cout << log << "Exiting due to consecutive missed deadlines" << endl; 
+                    cout << log << "Exiting due to consecutive missed deadlines" << endl;
                     continue_running = 0;
                     continue;
                 }
@@ -351,12 +351,23 @@ void *ImageCapture( void *threadid ){
     struct timespec    current;
            string      log = "[ ImgCap  ] ";
 
+    Mat capture, gray;
+    vector<Vec3f> circles;
+    VideoCapture cam;
+
+    cam.set(CV_CAP_PROP_FRAME_WIDTH, 320);
+    cam.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
+
+    cam.open(0);
+
+    cout << "Opened camera on video 0" << endl;
+
     while(continue_running){
         // Semaphore used to sync timing from SoftTimer
         sem_wait( &capture_sem );
         capture_status = 0;
 
-        // Mutex used to access shared memory
+/*        // Mutex used to access shared memory
         // ImageCapture - Update circle location information
         pthread_mutex_lock( &system_mutex );
 
@@ -370,9 +381,49 @@ void *ImageCapture( void *threadid ){
         pthread_mutex_unlock( &system_mutex );
 
         // Delay as placeholder
-        for(unsigned int ii=0; ii<1000000; ii++);   
+        for(unsigned int ii=0; ii<1000000; ii++);
 
-        capture_status = 2 - continue_running;     
+        capture_status = 2 - continue_running;*/
+
+        if (!cam.read(capture)) {
+            cout << "Could not capture image." << endl;
+            break;
+        }
+
+        // Convert to gray image
+        cvtColor(capture, gray, COLOR_BGR2GRAY);
+
+        // Find circles with Hough transform
+        HoughCircles(gray, circles, CV_HOUGH_GRADIENT, 1, gray.rows/8, 100, 50, 0, 0);
+
+        if (circles.size() < 1) {
+            cout << "No circle in image." << endl;
+
+            // Send to message queue
+            // Send center point
+
+        } else {
+            cout << "Found a circle!" << endl;
+
+            // Find circle center for one circle
+            Point center(cvRound(circles[0][0]), cvRound(circles[0][1]));
+
+            cout << "Circle x and y: ";
+            cout << cvRound(circles[0][0]);
+            cout << " ";
+            cout << cvRound(circles[0][1]) << endl;
+
+		    // Send to message queue
+            // cvRound(circles[0][0])
+        }
+
+        // 'q' will halt this thread and timer
+/*        char c = cvWaitKey(30);
+        if( c == 'q' ){
+            printf("break sig\n");
+            break;
+        }
+*/
     }
 }
 
@@ -412,7 +463,7 @@ void *MotorControl( void *threadid ){
     */
         // Using the timestamp information as placeholder
         clock_gettime( CLOCK_REALTIME, &current );
-        cout << log << "Motor Control running : " << 
+        cout << log << "Motor Control running : " <<
             current.tv_sec << "." <<
             setfill('0') << setw(9) << current.tv_nsec << endl;
         cout << log << "Error offset = " << error_offset << endl;
@@ -422,7 +473,7 @@ void *MotorControl( void *threadid ){
         // Delay as placeholder
         for(unsigned int ii=0; ii<1000000; ii++);
 
-        motor_status = 2 - continue_running;     
+        motor_status = 2 - continue_running;
 
     }
 }
