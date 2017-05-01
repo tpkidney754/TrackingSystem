@@ -26,6 +26,8 @@ static const char pinsFileValue[NUM_GPIO_PINS][35] =
 
 const static uint32_t pins[NUM_GPIO_PINS] = {66, 67, 69, 68};
 
+const static uint32_t midPoint = HRES >> 1;
+
 void MC_Init(void)
 {
     FILE* file;
@@ -45,6 +47,28 @@ void MC_Init(void)
     }
 
     MC_Stop();
+}
+
+void MC_Main(uint32_t errorOffset)
+{
+    struct   timespec req;
+
+    req.tv_sec  = TIMER_S;  // 0 secs
+    req.tv_nsec = TIMER_NS; // 100 msecs (1e8 nanosecs)
+
+    if (errorOffset > (midPoint + 10))
+    {
+        MC_CircleClockwise();
+        nanosleep(&req, NULL);
+        MC_Stop();
+    }
+    else if (errorOffset < (midPoint - 10))
+    {
+        MC_CircleCounterClockwise();
+        nanosleep(&req, NULL);
+        MC_Stop();
+    }
+
 }
 
 void MC_Forward(MC_Motor_t motor)

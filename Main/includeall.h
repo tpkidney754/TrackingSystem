@@ -14,3 +14,14 @@
 #include "motorcontroller.h"
 #include "pwm.h"
 #include "profiling.h"
+
+#define HRES 320
+#define VRES 240
+// Defined values
+#define TIMER_S      0
+#define TIMER_NS     100000000
+#define CYCLE_RUNS   20
+// freq between 1 to 10 Hz
+#define CAPTURE_FREQ 1
+#define MOTOR_FREQ   1
+#define SYNC_FREQ    10

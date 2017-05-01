@@ -37,6 +37,7 @@ typedef enum _MC_EnPin_t
 } MC_EnPin_t;
 
 void MC_Init(void);
+void MC_Main(uint32_t errorOffset);
 void MC_Forward(MC_Motor_t motor);
 void MC_Reverse(MC_Motor_t motor);
 void MC_CircleClockwise(void);

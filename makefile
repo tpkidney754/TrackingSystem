@@ -20,7 +20,7 @@ LIBOBJS = $(LIBS:.c=.o)
 PREOBJS = $(SRCS:.c=.i)
 ASMOBJS = $(SRCS:.c=.S)
 OUTPUT = Tracking
-CPPLIBS= -L/usr/lib -lopencv_core -lopencv_flann -lopencv_video
+CPPLIBS= -L/usr/local/lib -lopencv_core -lopencv_flann -lopencv_video
 
 
 

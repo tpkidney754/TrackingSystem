@@ -44,23 +44,14 @@ FIXME - Info from Ex4
 #include <iomanip>
 
 //OpenCV required packages
-//#include <opencv2/core/core.hpp>
-//#include <opencv2/highgui/highgui.hpp>
-//#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+// #include <opencv2/core.hpp>
+// #include <opencv2/highgui.hpp>
+// #include <opencv2/imgproc.hpp>
 
 #include "includeall.h"
-
-// Defined values
-#define TIMER_S      0
-#define TIMER_NS     100000000
-#define CYCLE_RUNS   20
-// freq between 1 to 10 Hz
-#define CAPTURE_FREQ 1
-#define MOTOR_FREQ   1
-#define SYNC_FREQ    10
 
 //Used packages
 using namespace cv;
@@ -148,8 +139,8 @@ int main( int argc, char* argv[] )
     error_offset     = 34;
 //    VideoCapture cam;
 
-    cam.set(CV_CAP_PROP_FRAME_WIDTH, 320);
-    cam.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
+    cam.set(CV_CAP_PROP_FRAME_WIDTH, HRES);
+    cam.set(CV_CAP_PROP_FRAME_HEIGHT, VRES);
     cam.set(CV_CAP_PROP_FPS, 2);
     cam.set(CV_CAP_PROP_BUFFERSIZE, 2);
 
@@ -375,7 +366,7 @@ void *ImageCapture( void *threadid ){
     Mat capture, gray, resized;
     vector<Vec3f> circles;
 
-    Size size(320,240);
+    Size size(HRES,VRES);
 //    VideoCapture cam;
 
 //    cam.set(CV_CAP_PROP_FRAME_WIDTH, 320);
@@ -422,22 +413,25 @@ void *ImageCapture( void *threadid ){
         // Find circles with Hough transform
         HoughCircles(gray, circles, CV_HOUGH_GRADIENT, 1, gray.rows/8, 100, 50, 0, 0);
 
-        if (circles.size() < 1) {
-            //cout << "No circle in image." << endl;
+        if (circles.size() < 1)
+        {
+            cout << "No circle in image." << endl;
 
             // Send to message queue
             // Send center point
 
-        } else {
+        }
+        else
+        {
             //cout << "Found a circle!" << endl;
 
             // Find circle center for one circle
-            Point center(cvRound(circles[0][0]), cvRound(circles[0][1]));
-
-            /*cout << "Circle x and y: ";
-            cout << cvRound(circles[0][0]);
-            cout << " ";
-            cout << cvRound(circles[0][1]) << endl;*/
+            //Point center(cvRound(circles[0][0]), cvRound(circles[0][1]));
+            error_offset = cvRound(circles[0][0]);
+            // cout << "Circle x and y: ";
+            // cout << cvRound(circles[0][0]);
+            // cout << " ";
+            // cout << cvRound(circles[0][1]) << endl;
 
 		    // Send to message queue
             // cvRound(circles[0][0])
@@ -460,13 +454,15 @@ void *ImageCapture( void *threadid ){
 MotorControl
 
 *******************************************************************/
-void *MotorControl( void *threadid ){
+void *MotorControl( void *threadid )
+{
 
     struct timespec current;
            string   log = "[ MtrCtrl ] ";
 
-    uint32_t xdirection = 0;
-    while(continue_running){
+    uint32_t localErrorOffset = 0;
+    while(continue_running)
+    {
         // Semaphore used to sync timing from SoftTimer
         sem_wait( &motor_sem );
         motor_status   = 0;
@@ -474,14 +470,15 @@ void *MotorControl( void *threadid ){
         // Mutex used to access shared memory
         // MotorControl - Get circle location information
         pthread_mutex_lock( &system_mutex );
-        xdirection = error_offset;
+        localErrorOffset = error_offset;
         error_offset = 0;
         pthread_mutex_unlock( &system_mutex );
 
-        if(xdirection > 0)
+        if (localErrorOffset)
         {
-            MC_CircleClockwise();
+            MC_Main(localErrorOffset);
         }
+
     /* Inject error to test status information and exit
         //Single miss, should stall and recover
         if(error_offset == 188){

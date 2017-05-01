@@ -34,7 +34,7 @@ void PWM_Init()
     fclose(file);
 
     file = fopen("/sys/class/pwm/pwm3/duty_ns", "w");
-    fprintf(file, "25000");
+    fprintf(file, "50000");
     fclose(file);
 
     file = fopen("/sys/class/pwm/pwm3/run", "w");
@@ -60,7 +60,7 @@ void PWM_Init()
     fclose(file);
 
     file = fopen("/sys/class/pwm/pwm4/duty_ns", "w");
-    fprintf(file, "25000");
+    fprintf(file, "50000");
     fclose(file);
 
     file = fopen("/sys/class/pwm/pwm4/run", "w");
