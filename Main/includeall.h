@@ -15,8 +15,8 @@
 #include "pwm.h"
 #include "profiling.h"
 
-#define HRES 320
-#define VRES 240
+#define HRES 640
+#define VRES 480
 // Defined values
 #define TIMER_S      0
 #define TIMER_NS     100000000
