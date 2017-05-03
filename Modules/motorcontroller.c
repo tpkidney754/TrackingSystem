@@ -54,7 +54,7 @@ void MC_Main(uint32_t errorOffset)
     struct   timespec req;
     uint32_t difference = 0;
 
-    req.tv_sec  = TIMER_S;  // 0 secs
+    req.tv_sec  = 0;  // 0 secs
     //req.tv_nsec = TIMER_NS; // 100 msecs (1e8 nanosecs)
     if (midPoint > errorOffset)
     {
@@ -68,7 +68,7 @@ void MC_Main(uint32_t errorOffset)
     switch (difference / 100)
     {
         case 1: req.tv_nsec = MOVE_100;
-        case 2: req.tv_nsec = MOVE_300;
+        case 2: req.tv_nsec = MOVE_200;
         case 3: req.tv_nsec = MOVE_300;
     }
 
@@ -77,14 +77,14 @@ void MC_Main(uint32_t errorOffset)
         MC_CircleClockwise();
         nanosleep(&req, NULL);
         MC_Stop();
-        //printf("moving: %d\n", difference);
+        printf("moving: %d\n", difference);
     }
     else if (errorOffset < (midPoint - 100))
     {
         MC_CircleCounterClockwise();
         nanosleep(&req, NULL);
         MC_Stop();
-        //printf("moving: %d\n", difference);
+        printf("moving: %d\n", difference);
     }
 }
 

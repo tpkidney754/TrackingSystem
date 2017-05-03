@@ -1,6 +1,42 @@
 #include "profiling.h"
 
+static void PRO_MotorBasics();
+static void PRO_MotorMain();
+static void PRO_delta(timespec_t *start, timespec_t *stop, timespec_t *delta_t);
+
 void PRO_RunProfilingSuite(void)
+{
+    //PRO_MotorBasics();
+    PRO_MotorMain();
+}
+
+static void PRO_MotorMain()
+{
+    timespec_t startTime;
+    timespec_t stopTime;
+    timespec_t elapsedTime;
+
+    uint32_t sum = 0;
+    uint32_t max = 0;
+    uint32_t averageTime = 0;
+    uint32_t temp = 0;
+
+    for (uint32_t i = 0; i < TEST_ITERATIONS; i++)
+    {
+        clock_gettime(CLOCK_REALTIME, &startTime);
+        MC_Main(640);
+        clock_gettime(CLOCK_REALTIME, &stopTime);
+        PRO_delta(&startTime, &stopTime, &elapsedTime);
+        temp = (uint32_t) elapsedTime.tv_nsec / 1000;
+        sum += temp;
+        max = (temp > max) ? temp : max;
+    }
+
+    averageTime = sum / TEST_ITERATIONS;
+    printf("\nMotorMain Max: %d, average: %d", max, averageTime);
+}
+
+static void PRO_MotorBasics()
 {
     timespec_t startTime;
     timespec_t stopTime;
@@ -61,7 +97,7 @@ void PRO_RunProfilingSuite(void)
     printf("Stopping both motors takes an average of %d microseconds, max: %d\n",averageTime[3], max[3]);
 }
 
-void PRO_delta(struct timespec *start, struct timespec *stop, struct timespec *delta_t)
+static void PRO_delta(timespec_t *start, timespec_t *stop, timespec_t *delta_t)
 {
     int dt_sec=stop->tv_sec - start->tv_sec;
     int dt_nsec=stop->tv_nsec - start->tv_nsec;

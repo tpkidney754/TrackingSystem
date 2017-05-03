@@ -111,6 +111,8 @@ int main( int argc, char* argv[] )
     PWM_Init();
     MC_Init();
 
+    //PRO_RunProfilingSuite();
+
     //Global Var setup
     continue_running = 1;
     capture_status   = 1;
@@ -132,6 +134,7 @@ int main( int argc, char* argv[] )
     capture = (CvCapture*) cvCreateCameraCapture(0);
     cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_WIDTH, HRES );
     cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_HEIGHT, VRES );
+    //cvSetCaptureProperty( capture, CV_CAP_PROP_FPS, 1 );
 
     //CPU select for setting affinity later
     //for multi-core system, this could be modified
