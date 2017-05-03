@@ -52,23 +52,40 @@ void MC_Init(void)
 void MC_Main(uint32_t errorOffset)
 {
     struct   timespec req;
+    uint32_t difference = 0;
 
     req.tv_sec  = TIMER_S;  // 0 secs
-    req.tv_nsec = TIMER_NS; // 100 msecs (1e8 nanosecs)
+    //req.tv_nsec = TIMER_NS; // 100 msecs (1e8 nanosecs)
+    if (midPoint > errorOffset)
+    {
+        difference = midPoint - errorOffset;
+    }
+    else
+    {
+        difference = errorOffset - midPoint;
+    }
 
-    if (errorOffset > (midPoint + 10))
+    switch (difference / 100)
+    {
+        case 1: req.tv_nsec = MOVE_100;
+        case 2: req.tv_nsec = MOVE_300;
+        case 3: req.tv_nsec = MOVE_300;
+    }
+
+    if (errorOffset > (midPoint + 100))
     {
         MC_CircleClockwise();
         nanosleep(&req, NULL);
         MC_Stop();
+        //printf("moving: %d\n", difference);
     }
-    else if (errorOffset < (midPoint - 10))
+    else if (errorOffset < (midPoint - 100))
     {
         MC_CircleCounterClockwise();
         nanosleep(&req, NULL);
         MC_Stop();
+        //printf("moving: %d\n", difference);
     }
-
 }
 
 void MC_Forward(MC_Motor_t motor)

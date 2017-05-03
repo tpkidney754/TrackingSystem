@@ -394,23 +394,27 @@ void *ImageCapture( void *threadid ){
         {
             printf("no circles dammit\n");
         }
-
-        for( size_t i = 0; i < circles.size( ); i++ )
+        else
         {
-          Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-          int radius = cvRound(circles[i][2]);
-          // circle center
-          circle( mat_frame, center, 3, Scalar(0,255,0), -1, 8, 0 );
-          // circle outline
-          circle( mat_frame, center, radius, Scalar(0,0,255), 3, 8, 0 );
-          if(i == 0)
-          {
             pthread_mutex_lock(&system_mutex);
             error_offset = cvRound(circles[0][0]);
             pthread_mutex_unlock(&system_mutex);
-            printf("x: %d, y: %d\n", cvRound(circles[0][0]), cvRound(circles[0][1]));
-          }
+            //printf("x: %d, y: %d\n", cvRound(circles[0][0]), cvRound(circles[0][1]));
         }
+
+        // for( size_t i = 0; i < circles.size( ); i++ )
+        // {
+        //   Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+        //   int radius = cvRound(circles[i][2]);
+        //   // circle center
+        //   circle( mat_frame, center, 3, Scalar(0,255,0), -1, 8, 0 );
+        //   // circle outline
+        //   circle( mat_frame, center, radius, Scalar(0,0,255), 3, 8, 0 );
+        //   if(i == 0)
+        //   {
+
+        //   }
+        // }
 
 
         // if (circles.size() < 1)

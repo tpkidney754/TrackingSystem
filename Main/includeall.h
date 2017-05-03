@@ -27,7 +27,7 @@
 // Defined values
 #define TIMER_S      0
 #define TIMER_NS     150000000
-#define CYCLE_RUNS   20
+#define CYCLE_RUNS   20000
 // freq between 1 to 10 Hz
 #define CAPTURE_FREQ 1
 #define MOTOR_FREQ   1
