@@ -26,7 +26,7 @@
 #define VRES 480
 // Defined values
 #define TIMER_S      1
-#define TIMER_NS     0
+#define TIMER_NS     500000000
 #define CYCLE_RUNS   200
 // freq between 1 to 10 Hz
 #define CAPTURE_FREQ 1

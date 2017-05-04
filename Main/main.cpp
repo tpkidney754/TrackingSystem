@@ -258,125 +258,15 @@ void *SoftTimer( void *threadid )
     string   log       = "[ TIMER   ] ";
 
     cout << log << "Setup hold time" << endl;
-    //nanosleep( &req, NULL );
-    capture_status = 1;
-    motor_status  = 1;
-
-
-    //while(cvQueryFrame( capture ) == NULL);
 
     req.tv_sec  = 2;//TIMER_S;
     req.tv_nsec = 0;//TIMER_NS;
 
     while(continue_running)
     {
-        // clock_gettime(CLOCK_REALTIME, &currentTime);
-        // syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
-        //         "SoftTimer started, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
-
-        // if(1)//cycle_cnt % SYNC_FREQ == 0)
-        // {
-        //     if(capture_status == 0)
-        //     {
-        //         if(0)//c_stall == 1)
-        //         {
-        //             //cout << log << "Exiting due to consecutive missed deadlines" << endl;
-        //             continue_running = 0;
-        //             continue;
-        //         }
-        //         cout << log << "Capture missed deadline" << endl;
-        //         c_m_cnt++;
-        //         c_stall = 1;
-
-        //         sem_getvalue(&capture_sem, &semval);
-        //         if (semval)
-        //         {
-        //             sem_wait(&capture_sem);
-        //         }
-        //     }
-        //     else
-        //     {
-        //         c_stall = 0;
-        //     }
-        //     if(motor_status == 0)
-        //     {
-        //         if(0)//m_stall == 1)
-        //         {
-        //             //cout << log << "Exiting due to consecutive missed deadlines" << endl;
-        //             continue_running = 0;
-        //             continue;
-        //         }
-        //         cout << log << "Motor missed deadline" << endl;
-        //         m_m_cnt++;
-        //         m_stall = 1;
-
-        //         sem_getvalue(&motor_sem, &semval);
-        //         if (semval)
-        //         {
-        //             sem_wait(&motor_sem);
-        //         }
-        //         MC_Stop();
-
-        //     }
-        //     else
-        //     {
-        //         m_stall = 0;
-        //     }
-        //     if(m_stall + c_stall == 0)
-        //     {
-        //         // sem_post( &capture_sem );
-        //         // sem_post( &motor_sem );
-        //         c_s_cnt++;
-        //         m_s_cnt++;
-        //     }
-
-        //     clock_gettime(CLOCK_REALTIME, &currentTime);
-        //     syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
-        //         "SoftTimer completed, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
-
-        //     sem_post( &capture_sem );
-        //     sem_post( &motor_sem );
-        //     nanosleep( &req, NULL );
-
-        // }
-
-        // if(cycle_cnt == SYNC_FREQ*(CYCLE_RUNS-1) )
-        // {
-        //     continue_running = 0;
-        //     //cout << log << "CR set to 0" << endl;
-        // }
-        // else
-        // {
-        //     cycle_cnt++;
-        // }
         nanosleep( &req, NULL );
-        cout << log << "Wake" << endl;
         sem_post(&capture_sem);
     }
-
-    // Evaluate last cycle
-    nanosleep( &req, NULL );
-    if(capture_status == 0)
-    {
-        //cout << log << "Capture missed deadline" << endl;
-        c_m_cnt++;
-    }
-    if(capture_status == 1)
-    {
-        sem_post( &capture_sem ); //Graceful exit if due to stall
-    }
-    if(motor_status == 0)
-    {
-        //cout << log << "Motor missed deadline" << endl;
-        m_m_cnt++;
-    }
-    if(motor_status == 1)
-    {
-        sem_post( &motor_sem ); //Graceful exit if due to stall
-    }
-
-    cout << log << "Capture : " << c_s_cnt << " starts, " << c_m_cnt << " missed." <<endl;
-    cout << log << "Motor   : " << m_s_cnt << " starts, " << m_m_cnt << " missed." <<endl;
 
     pthread_exit( NULL );
 }
@@ -400,28 +290,10 @@ void *ImageCapture( void *threadid ){
     {
         // Semaphore used to sync timing from SoftTimer
         sem_wait( &capture_sem );
-        capture_status = 0;
-        // clock_gettime(CLOCK_REALTIME, &currentTime);
-        // syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
-        //         "ImageCapture started,%ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
-
-        // if (!cam.read(capture))
-        // {
-        //    cout << "Could not capture image." << endl;
-        //    continue;
-        // }
 
         cam.set(CV_CAP_PROP_FPS, FPS);
         cam >> frame;
-        //cvSetCaptureProperty( capture, CV_CAP_PROP_FPS, FPS );
-        // frame = cvQueryFrame( capture );
-        // if( frame == NULL)
-        // {
-        //     capture_status = 1;
-        //     continue;
-        // }
 
-        // Mat mat_frame( cv::cvarrToMat(frame) );
         cvtColor( frame, gray, CV_BGR2GRAY );
         GaussianBlur( gray, gray, Size( 9, 9 ), 2, 2 );
         HoughCircles(gray, circles, CV_HOUGH_GRADIENT, 1, gray.rows / 8, 100, 50, 0, 0);
@@ -436,10 +308,6 @@ void *ImageCapture( void *threadid ){
             printf("x: %d, y: %d\n", cvRound(circles[0][0]), cvRound(circles[0][1]));
         }
 
-        capture_status = 1;
-        // clock_gettime(CLOCK_REALTIME, &currentTime);
-        // syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
-        //         "ImageCapture completed,%ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
         sem_post(&motor_sem);
     }
 }
@@ -459,34 +327,16 @@ void *MotorControl( void *threadid )
     {
         // Semaphore used to sync timing from SoftTimer
         sem_wait( &motor_sem );
-        cout << log << "Locked" << endl;
-        motor_status   = 0;
-        // clock_gettime(CLOCK_REALTIME, &currentTime);
-        // syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
-        //         "MotorControl started, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
-        // Mutex used to access shared memory
-        // MotorControl - Get circle location information
-        // pthread_mutex_lock( &system_mutex );
-        //cout << log << "Set LEO = " << localErrorOffset << endl;
-
 
         localErrorOffset = error_offset;
         error_offset = 0;
 
-        // pthread_mutex_unlock( &system_mutex );
-
-        cout << log << "Set LEO (eo) = " << localErrorOffset << "( " << error_offset << ")" << endl;
         if (localErrorOffset)
         {
             MC_Main(localErrorOffset);
-            //printf("moving motors\n");
         }
 
         motor_status = 1;
-        // clock_gettime(CLOCK_REALTIME, &currentTime);
-        // syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
-        //         "MotorControl completed,%ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
-        // sem_post(&capture_sem);
     }
 }
 
@@ -517,53 +367,3 @@ void print_scheduler(void)
             cout << log << "Pthread Policy is UNKNOWN" << endl;
     }
 }
-
-/*******************************************************************
-print_scheduler
-
-Function used to display current Pthread policy.
-*******************************************************************/
-static void camera_init(void){
-
-    Mat frame;
-    string log = "[ CM_INIT ] ";
-
-    if(!cam.set(CV_CAP_PROP_FRAME_WIDTH, HRES) ){
-        cout << log << "Set frame width to " << HRES << endl;
-    }else{
-        cout << log << "Error setting frame width" << endl;
-    }
-
-//    cam.set(CV_CAP_PROP_FRAME_HEIGHT, VRES);
-//    cam.set(CV_CAP_PROP_FPS, 5);
-   // cvSetCaptureProperty(CV_CAP_PROP_BUFFERSIZE, 1);
-    // if(!cam.set(CV_CAP_PROP_POS_FRAMES, 1) ){
-    //     cout << log << "Set position of frame to " << 1 << endl;
-    // }else{
-    //     cout << log << "Error setting frame width" << endl;
-    // }
-    // if(!cam.set(CV_CAP_PROP_FPS, 1) ){
-    //     cout << log << "Set position of frame to " << 1 << endl;
-    // }else{
-    //     cout << log << "Error setting frame width" << endl;
-    // }
-
-    cam.open(0);
-
-    cout << log << "Opened camera on video 0" << endl;
-
-    //Test image capture
-    cam >> frame;
-    // for(int ii=0; ii<10; ii++){
-    //     cout << log << "Count " << ii << endl;
-    //     if(!cam.grab()){
-    //         cout << log << "Empty buffer" << endl;
-    //         break;
-    //     }else{
-    //         cam.read( frame );
-    //         cout << log << "Grabbed image" << endl;
-    //     }
-    // }
-}
-
-
