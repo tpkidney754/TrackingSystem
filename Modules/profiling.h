@@ -5,7 +5,7 @@
 
 #define NSEC_PER_SEC        1000000000
 //#define TEST_ITERATIONS     10000
-#define TEST_ITERATIONS     5000
+#define TEST_ITERATIONS     10
 
 #define NUM_TESTS           4
 typedef struct timespec timespec_t;

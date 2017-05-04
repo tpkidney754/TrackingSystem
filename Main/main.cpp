@@ -30,11 +30,6 @@ FIXME - Info from Ex4
 ******************************************************************************/
 #include "includeall.h"
 
-//Used packages
-using namespace cv;
-//using namespace cv2;
-using namespace std;
-
 /*****************************************************************************
 * L O C A L F U N C T I O N S
 *****************************************************************************/
@@ -110,32 +105,32 @@ int main( int argc, char* argv[] )
 
     PWM_Init();
     MC_Init();
-
-    //PRO_RunProfilingSuite();
+    PWM_ChangeDutyCycle(100,0);
+    PWM_ChangeDutyCycle(100,1);
 
     //Global Var setup
     continue_running = 1;
     capture_status   = 1;
     motor_status     = 1;
     error_offset     = 0;
-//    VideoCapture cam;
-/*
+    openlog( NULL, LOG_CONS, LOG_USER );
+
+    // PRO_RunProfilingSuite();
+    // return 0;
+    cam.open(0);
     cam.set(CV_CAP_PROP_FRAME_WIDTH, HRES);
     cam.set(CV_CAP_PROP_FRAME_HEIGHT, VRES);
-    cam.set(CV_CAP_PROP_FPS, 2);
-    cam.set(CV_CAP_PROP_BUFFERSIZE, 2);
-
-    cam.open(0);
+    cam.set(CV_CAP_PROP_FPS, FPS);
+    cam.set(CV_CAP_PROP_BUFFERSIZE, 1);
 
     cout << log << "Opened camera on video 0" << endl;
-*/
+
 //    camera_init();
 
-    capture = (CvCapture*) cvCreateCameraCapture(0);
-    cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_WIDTH, HRES );
-    cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_HEIGHT, VRES );
-    //cvSetCaptureProperty( capture, CV_CAP_PROP_FPS, 1 );
-
+    // capture = (CvCapture*) cvCreateCameraCapture(0);
+    // cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_WIDTH, HRES );
+    // cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_HEIGHT, VRES );
+    // cvSetCaptureProperty( capture, CV_CAP_PROP_FPS, FPS);
     //CPU select for setting affinity later
     //for multi-core system, this could be modified
     //hardcoded for single cpu system
@@ -171,9 +166,9 @@ int main( int argc, char* argv[] )
     rc=sched_getparam(getpid(), &nrt_param);
 
     main_param.sched_priority    = rt_max_prio;
-    timer_param.sched_priority   = rt_max_prio-1;
-    capture_param.sched_priority = rt_max_prio-2;
-    motor_param.sched_priority   = rt_max_prio-3;
+    timer_param.sched_priority   = rt_max_prio;
+    capture_param.sched_priority = rt_max_prio-1;
+    motor_param.sched_priority   = rt_max_prio-2;
 
 
     if( sched_setscheduler( getpid(), SCHED_FIFO, &main_param ) )
@@ -192,6 +187,7 @@ int main( int argc, char* argv[] )
     pthread_attr_setschedparam(&motor_sched_attr, &motor_param);
     pthread_attr_setschedparam(&main_sched_attr, &main_param);
 
+//    sem_post(&capture_sem);
     //Create timer thread
     if( pthread_create( &timer_thread, &timer_sched_attr, SoftTimer, (void*)0))
     {
@@ -248,6 +244,7 @@ SoftTimer
 void *SoftTimer( void *threadid )
 {
     struct   timespec req;
+    struct   timespec currentTime;
     uint32_t cycle_cnt = 0;
     uint32_t c_s_cnt   = 0;
     uint32_t m_s_cnt   = 0;
@@ -255,73 +252,106 @@ void *SoftTimer( void *threadid )
     uint32_t m_m_cnt   = 0;
     uint32_t c_stall   = 0;
     uint32_t m_stall   = 0;
+
+    int32_t semval    = 0;
+
     string   log       = "[ TIMER   ] ";
 
-    req.tv_sec  = TIMER_S;  // 0 secs
-    req.tv_nsec = TIMER_NS; // 100 msecs (1e8 nanosecs)
-
     cout << log << "Setup hold time" << endl;
-    nanosleep( &req, NULL );
+    //nanosleep( &req, NULL );
+    capture_status = 1;
+    motor_status  = 1;
+
+
+    //while(cvQueryFrame( capture ) == NULL);
+
+    req.tv_sec  = 2;//TIMER_S;
+    req.tv_nsec = 0;//TIMER_NS;
 
     while(continue_running)
     {
-        nanosleep( &req, NULL );
+        // clock_gettime(CLOCK_REALTIME, &currentTime);
+        // syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
+        //         "SoftTimer started, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
 
-        if(cycle_cnt % SYNC_FREQ == 0)
-        {
-            if(capture_status == 0)
-            {
-                if(c_stall == 1)
-                {
-                    //cout << log << "Exiting due to consecutive missed deadlines" << endl;
-                    continue_running = 0;
-                    continue;
-                }
-                cout << log << "Capture missed deadline" << endl;
-                c_m_cnt++;
-                c_stall = 1;
-            }
-            else
-            {
-                c_stall = 0;
-            }
-            if(motor_status == 0)
-            {
-                if(m_stall == 1)
-                {
-                    //cout << log << "Exiting due to consecutive missed deadlines" << endl;
-                    continue_running = 0;
-                    continue;
-                }
-                //cout << log << "Motor missed deadline" << endl;
-                m_m_cnt++;
-                m_stall = 1;
-            }
-            else
-            {
-                m_stall = 0;
-            }
-            if(m_stall + c_stall == 0)
-            {
-                sem_post( &capture_sem );
-                sem_post( &motor_sem );
-                c_s_cnt++;
-                m_s_cnt++;
-            }
-        }
-        if( cycle_cnt == 9999 )
-        {
-            cycle_cnt = 0;
-        }
-        else if(cycle_cnt == SYNC_FREQ*(CYCLE_RUNS-1) )
-        {
-            continue_running = 0;
-            //cout << log << "CR set to 0" << endl;
-        }
-        else
-        {
-            cycle_cnt++;
-        }
+        // if(1)//cycle_cnt % SYNC_FREQ == 0)
+        // {
+        //     if(capture_status == 0)
+        //     {
+        //         if(0)//c_stall == 1)
+        //         {
+        //             //cout << log << "Exiting due to consecutive missed deadlines" << endl;
+        //             continue_running = 0;
+        //             continue;
+        //         }
+        //         cout << log << "Capture missed deadline" << endl;
+        //         c_m_cnt++;
+        //         c_stall = 1;
+
+        //         sem_getvalue(&capture_sem, &semval);
+        //         if (semval)
+        //         {
+        //             sem_wait(&capture_sem);
+        //         }
+        //     }
+        //     else
+        //     {
+        //         c_stall = 0;
+        //     }
+        //     if(motor_status == 0)
+        //     {
+        //         if(0)//m_stall == 1)
+        //         {
+        //             //cout << log << "Exiting due to consecutive missed deadlines" << endl;
+        //             continue_running = 0;
+        //             continue;
+        //         }
+        //         cout << log << "Motor missed deadline" << endl;
+        //         m_m_cnt++;
+        //         m_stall = 1;
+
+        //         sem_getvalue(&motor_sem, &semval);
+        //         if (semval)
+        //         {
+        //             sem_wait(&motor_sem);
+        //         }
+        //         MC_Stop();
+
+        //     }
+        //     else
+        //     {
+        //         m_stall = 0;
+        //     }
+        //     if(m_stall + c_stall == 0)
+        //     {
+        //         // sem_post( &capture_sem );
+        //         // sem_post( &motor_sem );
+        //         c_s_cnt++;
+        //         m_s_cnt++;
+        //     }
+
+        //     clock_gettime(CLOCK_REALTIME, &currentTime);
+        //     syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
+        //         "SoftTimer completed, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
+
+        //     sem_post( &capture_sem );
+        //     sem_post( &motor_sem );
+        //     nanosleep( &req, NULL );
+
+        // }
+
+        // if(cycle_cnt == SYNC_FREQ*(CYCLE_RUNS-1) )
+        // {
+        //     continue_running = 0;
+        //     //cout << log << "CR set to 0" << endl;
+        // }
+        // else
+        // {
+        //     cycle_cnt++;
+        // }
+        nanosleep( &req, NULL );
+        cout << log << "Wake" << endl;
+        sem_post(&capture_sem);
     }
 
     // Evaluate last cycle
@@ -357,39 +387,42 @@ ImageCapture
 *******************************************************************/
 void *ImageCapture( void *threadid ){
 
-    struct timespec    current;
+    struct timespec    currentTime;
            string      log = "[ ImgCap  ] ";
 
-    IplImage* frame;
-    Mat gray;
+    // IplImage* frame;
+    Mat frame, gray;
     vector<Vec3f> circles;
 
     Size size(HRES,VRES);
-
-
 
     while(continue_running)
     {
         // Semaphore used to sync timing from SoftTimer
         sem_wait( &capture_sem );
         capture_status = 0;
+        // clock_gettime(CLOCK_REALTIME, &currentTime);
+        // syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
+        //         "ImageCapture started,%ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
 
-        //cam.open(0);
+        // if (!cam.read(capture))
+        // {
+        //    cout << "Could not capture image." << endl;
+        //    continue;
+        // }
 
-        cvSetCaptureProperty( capture, CV_CAP_PROP_FPS, 1 );
-        frame = cvQueryFrame( capture );
-//        cam >> capture;
-        // cam.read(capture);
-        // resize(capture, resized, size);
+        cam.set(CV_CAP_PROP_FPS, FPS);
+        cam >> frame;
+        //cvSetCaptureProperty( capture, CV_CAP_PROP_FPS, FPS );
+        // frame = cvQueryFrame( capture );
+        // if( frame == NULL)
+        // {
+        //     capture_status = 1;
+        //     continue;
+        // }
 
-        // // Convert to gray image
-        // cvtColor(resized, gray, COLOR_BGR2GRAY);
-
-        // // Find circles with Hough transform
-        // HoughCircles(gray, circles, CV_HOUGH_GRADIENT, 1, gray.rows/8, 100, 50, 0, 0);
-
-        Mat mat_frame( cv::cvarrToMat(frame) );
-        cvtColor( mat_frame, gray, CV_BGR2GRAY );
+        // Mat mat_frame( cv::cvarrToMat(frame) );
+        cvtColor( frame, gray, CV_BGR2GRAY );
         GaussianBlur( gray, gray, Size( 9, 9 ), 2, 2 );
         HoughCircles(gray, circles, CV_HOUGH_GRADIENT, 1, gray.rows / 8, 100, 50, 0, 0);
 
@@ -399,52 +432,15 @@ void *ImageCapture( void *threadid ){
         }
         else
         {
-            pthread_mutex_lock(&system_mutex);
             error_offset = cvRound(circles[0][0]);
-            pthread_mutex_unlock(&system_mutex);
-            //printf("x: %d, y: %d\n", cvRound(circles[0][0]), cvRound(circles[0][1]));
+            printf("x: %d, y: %d\n", cvRound(circles[0][0]), cvRound(circles[0][1]));
         }
 
-        // for( size_t i = 0; i < circles.size( ); i++ )
-        // {
-        //   Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-        //   int radius = cvRound(circles[i][2]);
-        //   // circle center
-        //   circle( mat_frame, center, 3, Scalar(0,255,0), -1, 8, 0 );
-        //   // circle outline
-        //   circle( mat_frame, center, radius, Scalar(0,0,255), 3, 8, 0 );
-        //   if(i == 0)
-        //   {
-
-        //   }
-        // }
-
-
-        // if (circles.size() < 1)
-        // {
-        //     cout << "No circle in image." << endl;
-        //     // Send to message queue
-        //     // Send center point
-
-        // }
-        // else
-        // {
-        //     pthread_mutex_lock(&system_mutex);
-        //     error_offset = cvRound(circles[0][0]);
-        //     pthread_mutex_unlock(&system_mutex);
-        //     // Send to message queue
-        // }
-
-        //cam.release();
-        capture_status = 2 - continue_running;
-
-        // // 'q' will halt this thread and timer
-        // char c = cvWaitKey(30);
-        // if( c == 'q' )
-        // {
-        //     break;
-        // }
-
+        capture_status = 1;
+        // clock_gettime(CLOCK_REALTIME, &currentTime);
+        // syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
+        //         "ImageCapture completed,%ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
+        sem_post(&motor_sem);
     }
 }
 
@@ -455,7 +451,7 @@ MotorControl
 void *MotorControl( void *threadid )
 {
 
-    struct timespec current;
+    struct timespec currentTime;
            string   log = "[ MtrCtrl ] ";
 
     uint32_t localErrorOffset = 0;
@@ -463,22 +459,34 @@ void *MotorControl( void *threadid )
     {
         // Semaphore used to sync timing from SoftTimer
         sem_wait( &motor_sem );
+        cout << log << "Locked" << endl;
         motor_status   = 0;
-
+        // clock_gettime(CLOCK_REALTIME, &currentTime);
+        // syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
+        //         "MotorControl started, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
         // Mutex used to access shared memory
         // MotorControl - Get circle location information
-        pthread_mutex_lock( &system_mutex );
+        // pthread_mutex_lock( &system_mutex );
+        //cout << log << "Set LEO = " << localErrorOffset << endl;
+
+
         localErrorOffset = error_offset;
         error_offset = 0;
-        pthread_mutex_unlock( &system_mutex );
 
+        // pthread_mutex_unlock( &system_mutex );
+
+        cout << log << "Set LEO (eo) = " << localErrorOffset << "( " << error_offset << ")" << endl;
         if (localErrorOffset)
         {
             MC_Main(localErrorOffset);
+            //printf("moving motors\n");
         }
 
-        motor_status = 2 - continue_running;
-
+        motor_status = 1;
+        // clock_gettime(CLOCK_REALTIME, &currentTime);
+        // syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
+        //         "MotorControl completed,%ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
+        // sem_post(&capture_sem);
     }
 }
 
@@ -528,7 +536,7 @@ static void camera_init(void){
 
 //    cam.set(CV_CAP_PROP_FRAME_HEIGHT, VRES);
 //    cam.set(CV_CAP_PROP_FPS, 5);
-//    cam.set(CV_CAP_PROP_BUFFERSIZE, 2);
+   // cvSetCaptureProperty(CV_CAP_PROP_BUFFERSIZE, 1);
     // if(!cam.set(CV_CAP_PROP_POS_FRAMES, 1) ){
     //     cout << log << "Set position of frame to " << 1 << endl;
     // }else{

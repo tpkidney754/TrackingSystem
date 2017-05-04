@@ -141,8 +141,8 @@ int main( int argc, char* argv[] )
 
     cam.set(CV_CAP_PROP_FRAME_WIDTH, HRES);
     cam.set(CV_CAP_PROP_FRAME_HEIGHT, VRES);
-    cam.set(CV_CAP_PROP_FPS, 2);
-    cam.set(CV_CAP_PROP_BUFFERSIZE, 2);
+    cam.set(CV_CAP_PROP_FPS, FPS);
+    // cam.set(CV_CAP_PROP_BUFFERSIZE, 2);
 
     cam.open(0);
 
@@ -234,16 +234,16 @@ int main( int argc, char* argv[] )
 
     //Waits until threads are completed
     pthread_join( timer_thread,   NULL );
-    pthread_join( capture_thread, NULL );
+    //pthread_join( capture_thread, NULL );
     pthread_join( motor_thread,   NULL );
 
     //Destroy threads attributes
     if(pthread_attr_destroy( &timer_sched_attr ) != 0){
         perror("attr destroy");
     }
-    if(pthread_attr_destroy( &capture_sched_attr ) != 0){
-        perror("attr destroy");
-    }
+    // if(pthread_attr_destroy( &capture_sched_attr ) != 0){
+    //     perror("attr destroy");
+    // }
     if(pthread_attr_destroy( &motor_sched_attr ) != 0){
         perror("attr destroy");
     }
@@ -281,7 +281,7 @@ void *SoftTimer( void *threadid ){
 
     while(continue_running){
 
-        nanosleep( &req, NULL );
+      //  nanosleep( &req, NULL );
 /*
         if( cycle_cnt%CAPTURE_FREQ == 0 ){
             sem_post( &capture_sem );

@@ -44,9 +44,9 @@ void MC_CircleClockwise(void);
 void MC_CircleCounterClockwise(void);
 void MC_Stop(void);
 
-#define MOVE_100 25000000
-#define MOVE_200 50000000
-#define MOVE_300 75000000
+#define MOVE_100 50000000
+#define MOVE_200 75000000
+#define MOVE_300 100000000
 
 #endif // __MOTOR__
 

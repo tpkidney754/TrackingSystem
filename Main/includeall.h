@@ -12,7 +12,7 @@
 #include <errno.h>
 #include <iostream>
 #include <iomanip>
-
+#include <syslog.h>
 //OpenCV required packages
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -25,12 +25,18 @@
 #define HRES 640
 #define VRES 480
 // Defined values
-#define TIMER_S      0
-#define TIMER_NS     150000000
-#define CYCLE_RUNS   20000
+#define TIMER_S      1
+#define TIMER_NS     0
+#define CYCLE_RUNS   200
 // freq between 1 to 10 Hz
 #define CAPTURE_FREQ 1
 #define MOTOR_FREQ   1
-#define SYNC_FREQ    10
+#define SYNC_FREQ    1
+#define FPS          8
 
 #define BUFFER_SIZE 10
+
+//Used packages
+using namespace cv;
+//using namespace cv2;
+using namespace std;
