@@ -25,7 +25,7 @@
 #define HRES 640
 #define VRES 480
 // Defined values
-#define TIMER_S      1
+#define TIMER_S      2
 #define TIMER_NS     0
 #define CYCLE_RUNS   200
 // freq between 1 to 10 Hz

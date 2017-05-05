@@ -393,7 +393,6 @@ void *ImageCapture( void *threadid ){
         cam.set(CV_CAP_PROP_FPS, FPS);
         cam >> frame;
 
-        // Mat mat_frame( cv::cvarrToMat(frame) );
         cvtColor( frame, gray, CV_BGR2GRAY );
         GaussianBlur( gray, gray, Size( 9, 9 ), 2, 2 );
         HoughCircles(gray, circles, CV_HOUGH_GRADIENT, 1, gray.rows / 8, 100, 50, 0, 0);
@@ -429,7 +428,6 @@ void *MotorControl( void *threadid )
     {
         // Semaphore used to sync timing from SoftTimer
         sem_wait( &motor_sem );
-        cout << log << "Locked" << endl;
         motor_status   = 0;
 
         clock_gettime(CLOCK_REALTIME, &currentTime);
@@ -443,7 +441,6 @@ void *MotorControl( void *threadid )
         error_offset = 0;
         pthread_mutex_unlock( &system_mutex );
 
-        cout << log << "Set LEO (eo) = " << localErrorOffset << "( " << error_offset << ")" << endl;
         if (localErrorOffset)
         {
             MC_Main(localErrorOffset);
