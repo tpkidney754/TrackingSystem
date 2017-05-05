@@ -124,7 +124,6 @@ int main( int argc, char* argv[] )
     cam.set(CV_CAP_PROP_FRAME_WIDTH, HRES);
     cam.set(CV_CAP_PROP_FRAME_HEIGHT, VRES);
     cam.set(CV_CAP_PROP_FPS, FPS);
-    cam.set(CV_CAP_PROP_BUFFERSIZE, 1);
 
     cout << log << "Opened camera on video 0" << endl;
 
@@ -139,10 +138,10 @@ int main( int argc, char* argv[] )
     pthread_mutex_init( &system_mutex, NULL );
 
     //Scheduler setup
-    pthread_attr_init( &main_sched_attr        );
-    pthread_attr_init( &timer_sched_attr    );
-    pthread_attr_init( &capture_sched_attr    );
-    pthread_attr_init( &motor_sched_attr    );
+    pthread_attr_init( &main_sched_attr );
+    pthread_attr_init( &timer_sched_attr );
+    pthread_attr_init( &capture_sched_attr );
+    pthread_attr_init( &motor_sched_attr );
 
     pthread_attr_setinheritsched( &main_sched_attr,     PTHREAD_EXPLICIT_SCHED );
     pthread_attr_setinheritsched( &timer_sched_attr,     PTHREAD_EXPLICIT_SCHED );
@@ -413,7 +412,6 @@ void *ImageCapture( void *threadid ){
 
         capture_status = 1;
 
-        sem_post(&motor_sem);
     }
 }
 
@@ -455,8 +453,6 @@ void *MotorControl( void *threadid )
         }
 
         motor_status = 1;
-
-        sem_post(&capture_sem);
     }
 }
 
