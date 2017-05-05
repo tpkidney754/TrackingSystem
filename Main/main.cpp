@@ -312,19 +312,14 @@ void *SoftTimer( void *threadid )
             }
             if(m_stall + c_stall == 0)
             {
+                clock_gettime(CLOCK_REALTIME, &currentTime);
+                syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
+                "capture_sem posted, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec)
                 sem_post( &capture_sem );
                 sem_post( &motor_sem );
                 c_s_cnt++;
                 m_s_cnt++;
             }
-
-            clock_gettime(CLOCK_REALTIME, &currentTime);
-            syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
-                "SoftTimer completed, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
-
-            sem_post( &capture_sem );
-            sem_post( &motor_sem );
-            nanosleep( &req, NULL );
 
         }
 
@@ -338,8 +333,6 @@ void *SoftTimer( void *threadid )
             cycle_cnt++;
         }
         nanosleep( &req, NULL );
-        cout << log << "Wake" << endl;
-        sem_post(&capture_sem);
     }
 
     // Evaluate last cycle
@@ -388,6 +381,9 @@ void *ImageCapture( void *threadid ){
         // Semaphore used to sync timing from SoftTimer
         sem_wait( &capture_sem );
         capture_status = 0;
+        clock_gettime(CLOCK_REALTIME, &currentTime);
+        syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
+                "ImageCapture started, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec)
 
         // Don't know why, but for some reason it only works when we set the FPS every time.
         cam.set(CV_CAP_PROP_FPS, FPS);
@@ -399,12 +395,20 @@ void *ImageCapture( void *threadid ){
 
         if( circles.size() < 1 )
         {
-            printf("no circles dammit\n");
+            syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
+                    "no circles detected\n");
         }
         else
         {
+            clock_gettime(CLOCK_REALTIME, &currentTime);
+            syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
+                    "ImageCapture setting error_offset, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec)
+
+            pthread_mutex_lock( &system_mutex );
             error_offset = cvRound(circles[0][0]);
-            printf("x: %d, y: %d\n", cvRound(circles[0][0]), cvRound(circles[0][1]));
+            pthread_mutex_unlock( &system_mutex );
+            syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
+                    "x: %d, y: %d\n", cvRound(circles[0][0]), cvRound(circles[0][1]));
         }
 
         capture_status = 1;
@@ -443,13 +447,15 @@ void *MotorControl( void *threadid )
 
         if (localErrorOffset)
         {
+            clock_gettime(CLOCK_REALTIME, &currentTime);
+            syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
+                "MotorControl starting MC_Main, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
+
             MC_Main(localErrorOffset);
         }
 
         motor_status = 1;
-        clock_gettime(CLOCK_REALTIME, &currentTime);
-        syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
-                "MotorControl completed,%ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
+
         sem_post(&capture_sem);
     }
 }
