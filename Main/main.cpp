@@ -314,7 +314,7 @@ void *SoftTimer( void *threadid )
             {
                 clock_gettime(CLOCK_REALTIME, &currentTime);
                 syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
-                "capture_sem posted, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec)
+                        "capture_sem posted, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
                 sem_post( &capture_sem );
                 sem_post( &motor_sem );
                 c_s_cnt++;
@@ -383,7 +383,7 @@ void *ImageCapture( void *threadid ){
         capture_status = 0;
         clock_gettime(CLOCK_REALTIME, &currentTime);
         syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
-                "ImageCapture started, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec)
+                "ImageCapture started, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
 
         // Don't know why, but for some reason it only works when we set the FPS every time.
         cam.set(CV_CAP_PROP_FPS, FPS);
@@ -402,7 +402,7 @@ void *ImageCapture( void *threadid ){
         {
             clock_gettime(CLOCK_REALTIME, &currentTime);
             syslog( LOG_MAKEPRI( LOG_USER, LOG_INFO ),
-                    "ImageCapture setting error_offset, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec)
+                    "ImageCapture setting error_offset, %ld,%ld\n", currentTime.tv_sec, currentTime.tv_nsec);
 
             pthread_mutex_lock( &system_mutex );
             error_offset = cvRound(circles[0][0]);
