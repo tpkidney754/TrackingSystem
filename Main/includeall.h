@@ -34,8 +34,7 @@
 #define SYNC_FREQ    1
 #define FPS          8
 
-#define BUFFER_SIZE 10
-
+#define TESTING 0
 //Used packages
 using namespace cv;
 //using namespace cv2;
