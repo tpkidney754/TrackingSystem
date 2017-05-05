@@ -265,6 +265,7 @@ void *SoftTimer( void *threadid )
     while(continue_running)
     {
         nanosleep( &req, NULL );
+        //Syslog statement here - Time_stamp
         sem_post(&capture_sem);
     }
 
@@ -290,7 +291,8 @@ void *ImageCapture( void *threadid ){
     {
         // Semaphore used to sync timing from SoftTimer
         sem_wait( &capture_sem );
-
+        //Syslog statement here - Image cap start with time_stamp
+        
         cam.set(CV_CAP_PROP_FPS, FPS);
         cam >> frame;
 
@@ -304,6 +306,7 @@ void *ImageCapture( void *threadid ){
         }
         else
         {
+            //Syslog statement here - error_offset with time_stamp
             error_offset = cvRound(circles[0][0]);
             printf("x: %d, y: %d\n", cvRound(circles[0][0]), cvRound(circles[0][1]));
         }
@@ -327,12 +330,14 @@ void *MotorControl( void *threadid )
     {
         // Semaphore used to sync timing from SoftTimer
         sem_wait( &motor_sem );
-
+        //Syslog statement here - motor start with time_stamp
+        
         localErrorOffset = error_offset;
         error_offset = 0;
 
         if (localErrorOffset)
         {
+            //Syslog statement here - localErrorOffset with time_stamp
             MC_Main(localErrorOffset);
         }
 
